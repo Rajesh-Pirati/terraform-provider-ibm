@@ -19,6 +19,7 @@ require (
 	github.com/IBM/networking-go-sdk v0.19.0
 	github.com/IBM/platform-services-go-sdk v0.19.3
 	github.com/IBM/push-notifications-go-sdk v0.0.0-20210310100607-5790b96c47f5
+	github.com/IBM/scc-go-sdk v1.2.0
 	github.com/IBM/schematics-go-sdk v0.0.2
 	github.com/IBM/secrets-manager-go-sdk v0.1.19
 	github.com/IBM/vpc-go-sdk v0.9.0
@@ -39,7 +40,7 @@ require (
 	github.com/hashicorp/go-version v1.3.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.7.0
 	github.com/hokaccha/go-prettyjson v0.0.0-20170213120834-e6b9231a2b1c // indirect
-	github.com/jinzhu/copier v0.3.2 // indirect
+	github.com/jinzhu/copier v0.3.2
 	github.com/minsikl/netscaler-nitro-go v0.0.0-20170827154432-5b14ce3643e3
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/softlayer/softlayer-go v1.0.3

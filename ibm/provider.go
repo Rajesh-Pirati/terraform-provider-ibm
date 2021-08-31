@@ -424,6 +424,10 @@ func Provider() *schema.Provider {
 			"ibm_atracker_targets":   dataSourceIBMAtrackerTargets(),
 			"ibm_atracker_routes":    dataSourceIBMAtrackerRoutes(),
 			"ibm_atracker_endpoints": dataSourceIBMAtrackerEndpoints(),
+
+			//Security and Compliance Center
+			"ibm_scc_si_provider": dataSourceIBMSccSiProvider(),
+			"ibm_scc_si_note":     dataSourceIBMSccSiNote(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -680,6 +684,9 @@ func Provider() *schema.Provider {
 			// Atracker
 			"ibm_atracker_target": resourceIBMAtrackerTarget(),
 			"ibm_atracker_route":  resourceIBMAtrackerRoute(),
+
+			//Security and Compliance Center
+			"ibm_scc_si_note": resourceIBMSccSiNote(),
 		},
 
 		ConfigureFunc: providerConfigure,
@@ -785,6 +792,7 @@ func Validator() ValidatorDict {
 				"ibm_pi_volume":                           resourceIBMPIVolumeValidator(),
 				"ibm_atracker_target":                     resourceIBMAtrackerTargetValidator(),
 				"ibm_atracker_route":                      resourceIBMAtrackerRouteValidator(),
+				"ibm_scc_si_note":                         resourceIBMSccSiNoteValidator(),
 			},
 			DataSourceValidatorDictionary: map[string]*ResourceValidator{
 				"ibm_is_subnet":               dataSourceIBMISSubnetValidator(),

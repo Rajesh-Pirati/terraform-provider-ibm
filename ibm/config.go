@@ -15,7 +15,6 @@ import (
 	"time"
 
 	// Added code for the Power Colo Offering
-
 	"github.com/IBM-Cloud/container-services-go-sdk/kubernetesserviceapiv1"
 	apigateway "github.com/IBM/apigateway-go-sdk/apigatewaycontrollerapiv1"
 	"github.com/IBM/appconfiguration-go-admin-sdk/appconfigurationv1"
@@ -60,6 +59,7 @@ import (
 	resourcecontroller "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	resourcemanager "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/push-notifications-go-sdk/pushservicev1"
+	"github.com/IBM/scc-go-sdk/findingsv1"
 	schematicsv1 "github.com/IBM/schematics-go-sdk/schematicsv1"
 	"github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1"
 	vpc "github.com/IBM/vpc-go-sdk/vpcv1"
@@ -250,6 +250,7 @@ type ClientSession interface {
 	SatelliteClientSession() (*kubernetesserviceapiv1.KubernetesServiceApiV1, error)
 	CisFiltersSession() (*cisfiltersv1.FiltersV1, error)
 	AtrackerV1() (*atrackerv1.AtrackerV1, error)
+	FindingsV1() (*findingsv1.FindingsV1, error)
 }
 
 type clientSession struct {
@@ -489,6 +490,10 @@ type clientSession struct {
 	//Atracker
 	atrackerClient    *atrackerv1.AtrackerV1
 	atrackerClientErr error
+
+	// Security and Compliance Center (SCC)
+	findingsClient    *findingsv1.FindingsV1
+	findingsClientErr error
 }
 
 // AppIDAPI provides AppID Service APIs ...
@@ -902,6 +907,14 @@ func (session clientSession) AtrackerV1() (*atrackerv1.AtrackerV1, error) {
 	return session.atrackerClient, session.atrackerClientErr
 }
 
+// Security and Compliance center Findings API
+func (session clientSession) FindingsV1() (*findingsv1.FindingsV1, error) {
+	if session.findingsClientErr != nil {
+		return session.findingsClient, session.findingsClientErr
+	}
+	return session.findingsClient.Clone(), nil
+}
+
 // ClientSession configures and returns a fully initialized ClientSession
 func (c *Config) ClientSession() (interface{}, error) {
 	sess, err := newSession(c)
@@ -1226,6 +1239,39 @@ func (c *Config) ClientSession() (interface{}, error) {
 		})
 	} else {
 		session.atrackerClientErr = fmt.Errorf("Error occurred while configuring Activity Tracker API service: %q", err)
+	}
+
+	// Construct an "options" struct for creating the SCC findings client.
+	var findingsClientURL string
+	if c.Visibility == "private" || c.Visibility == "public-and-private" {
+		findingsClientURL, err = findingsv1.GetServiceURLForRegion("private." + c.Region)
+		if err != nil && c.Visibility == "public-and-private" {
+			findingsClientURL, err = findingsv1.GetServiceURLForRegion(c.Region)
+		}
+	} else {
+		findingsClientURL, err = findingsv1.GetServiceURLForRegion(c.Region)
+	}
+	if err != nil {
+		findingsClientURL = findingsv1.DefaultServiceURL
+	}
+
+	findingsClientOptions := &findingsv1.FindingsV1Options{
+		Authenticator: authenticator,
+		URL:           envFallBack([]string{"IBMCLOUD_SCC_FINDINGS_API_ENDPOINT"}, findingsClientURL),
+		AccountID:     core.StringPtr(userConfig.userAccount),
+	}
+
+	// Construct the service client.
+	session.findingsClient, err = findingsv1.NewFindingsV1(findingsClientOptions)
+	if err == nil {
+		// Enable retries for API calls
+		session.findingsClient.Service.EnableRetries(c.RetryCount, c.RetryDelay)
+		// Add custom header for analytics
+		session.findingsClient.SetDefaultHeaders(gohttp.Header{
+			"X-Original-User-Agent": {fmt.Sprintf("terraform-provider-ibm/%s", version.Version)},
+		})
+	} else {
+		session.findingsClientErr = fmt.Errorf("Error occurred while configuring SCC Insights Findings API service: %q", err)
 	}
 
 	// Construct the service client.
